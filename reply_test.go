@@ -1,6 +1,7 @@
 package reply_test
 
 import (
+	"encoding/xml"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -49,7 +50,7 @@ func TestReply(t *testing.T) {
 		c.fn(w, c.data)
 		resp := w.Result()
 		is.Equal(resp.StatusCode, c.code)
-		is.Equal(resp.Header.Get("Content-Type"), "application/json")
+		is.Equal(resp.Header.Get(reply.HeaderContentType), reply.MIMEApplicationJSON)
 	}
 }
 
@@ -62,7 +63,7 @@ func TestCustomReplier(t *testing.T) {
 
 func TestDefaultMethods(t *testing.T) {
 	is := is.New(t)
-	replier := reply.NewReplier(reply.JSONMode)
+	replier := reply.NewReplier()
 
 	for _, c := range []struct {
 		fn   func(w http.ResponseWriter, data interface{}) error
@@ -103,6 +104,21 @@ func TestNewReplier(t *testing.T) {
 	is.Equal(resp.Header.Get(reply.HeaderContentType), reply.MIMEApplicationXML)
 }
 
+func TestXMLModeError(t *testing.T) {
+	type example struct {
+		A int
+		B int
+		C func() int
+	}
+	is := is.New(t)
+	w := httptest.NewRecorder()
+	replier := reply.NewReplier(reply.XMLMode)
+	err := replier.Ok(w, &example{})
+	_, ok := err.(*xml.UnsupportedTypeError)
+
+	is.True(ok)
+}
+
 func TestSetHeader(t *testing.T) {
 	is := is.New(t)
 	w := httptest.NewRecorder()
@@ -110,4 +126,18 @@ func TestSetHeader(t *testing.T) {
 	replier.Ok(w, nil)
 	resp := w.Result()
 	is.Equal(resp.Header.Get(reply.HeaderLocation), "/test")
+}
+
+func TestSetHeaderFunc(t *testing.T) {
+	is := is.New(t)
+	w := httptest.NewRecorder()
+	n := "5"
+	r := reply.NewReplier(reply.SetHeaderFunc(func(w http.ResponseWriter) {
+		w.Header().Set("test", n)
+		w.Header().Set(reply.HeaderLocation, "/here")
+	}))
+	r.Ok(w, nil)
+	resp := w.Result()
+	is.Equal(resp.Header.Get("test"), n)
+	is.Equal(resp.Header.Get(reply.HeaderLocation), "/here")
 }

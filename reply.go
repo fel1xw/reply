@@ -2,12 +2,8 @@ package reply
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"net/http"
-)
-
-// Library
-const (
-	Version = "0.0.1"
 )
 
 // Headers
@@ -25,7 +21,9 @@ const (
 
 // ReplierConfig -
 type ReplierConfig struct {
-	Header http.Header
+	Header      http.Header
+	transformFn []func(w http.ResponseWriter)
+	encode      func(w http.ResponseWriter, data interface{}) error
 }
 
 // Replier -
@@ -34,15 +32,8 @@ type Replier struct {
 }
 
 var (
-	// DefaultReplierConfig is the default configuration (json).
-	DefaultReplierConfig = &ReplierConfig{
-		Header: http.Header{
-			HeaderContentType: []string{MIMEApplicationJSON},
-		},
-	}
-
 	// DefaultReplier -
-	DefaultReplier = NewReplier(JSONMode)
+	DefaultReplier = NewReplier()
 )
 
 // Configure -
@@ -54,6 +45,8 @@ func NewReplier(config ...Configure) *Replier {
 		Header: http.Header{},
 	}
 
+	JSONMode(cfg)
+
 	for _, configure := range config {
 		configure(cfg)
 	}
@@ -64,20 +57,39 @@ func NewReplier(config ...Configure) *Replier {
 }
 
 // SetHeader sets a custom header to the Replier configuration
-func SetHeader(key, value string) func(config *ReplierConfig) {
+func SetHeader(key, value string) Configure {
 	return func(config *ReplierConfig) {
 		config.Header.Set(key, value)
+	}
+}
+
+// SetHeaderFunc is executed on each response call
+func SetHeaderFunc(fn func(w http.ResponseWriter)) Configure {
+	return func(config *ReplierConfig) {
+		config.transformFn = append(config.transformFn, fn)
 	}
 }
 
 // JSONMode - Sets content-type for responses to be content-type application/json
 func JSONMode(config *ReplierConfig) {
 	config.Header.Set(HeaderContentType, MIMEApplicationJSON)
+	config.encode = func(w http.ResponseWriter, data interface{}) error {
+		return json.NewEncoder(w).Encode(data)
+	}
 }
 
 // XMLMode - Sets content-type for responses to be content-type application/xml
 func XMLMode(config *ReplierConfig) {
 	config.Header.Set(HeaderContentType, MIMEApplicationXML)
+	config.encode = func(w http.ResponseWriter, data interface{}) error {
+		x, err := xml.MarshalIndent(data, "", "  ")
+		if err != nil {
+			return err
+		}
+
+		_, err = w.Write(x)
+		return err
+	}
 }
 
 // Ok sets the statusCode of the response to be 200
@@ -105,10 +117,12 @@ func (r *Replier) Custom(w http.ResponseWriter, statusCode int, data interface{}
 	for key, value := range r.config.Header {
 		w.Header().Set(key, value[0])
 	}
-	w.Header().Set(HeaderContentType, r.config.Header.Get(HeaderContentType))
+	for _, fn := range r.config.transformFn {
+		fn(w)
+	}
 	w.WriteHeader(statusCode)
 
-	return json.NewEncoder(w).Encode(data)
+	return r.config.encode(w, data)
 }
 
 // Custom sets the statusCode of the response to the passed one with the DefaultConfig
