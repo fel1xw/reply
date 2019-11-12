@@ -56,3 +56,26 @@ func TestReply(t *testing.T) {
 		is.Equal(resp.Header.Get("Content-Type"), "application/json")
 	}
 }
+
+func TestCustomReplier(t *testing.T) {
+	is := is.New(t)
+	w := httptest.NewRecorder()
+	reply.Custom(w, http.StatusInternalServerError, nil)
+	is.Equal(w.Code, http.StatusInternalServerError)
+}
+
+func TestNewReplier(t *testing.T) {
+	is := is.New(t)
+	w := httptest.NewRecorder()
+	replier := reply.NewReplier(reply.XMLMode)
+	replier.Ok(w, nil)
+	is.Equal(w.Header().Get(reply.HeaderContentType), reply.MIMEApplicationXML)
+}
+
+func TestSetHeader(t *testing.T) {
+	is := is.New(t)
+	w := httptest.NewRecorder()
+	replier := reply.NewReplier(reply.SetHeader(reply.HeaderLocation, "/test"))
+	replier.Ok(w, nil)
+	is.Equal(w.Header().Get(reply.HeaderLocation), "/test")
+}
