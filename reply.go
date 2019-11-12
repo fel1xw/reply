@@ -112,6 +112,15 @@ func (r *Replier) Created(w http.ResponseWriter, data interface{}) error {
 	return r.Custom(w, http.StatusCreated, data)
 }
 
+// CreatedWithLocation sets statuscode and location header
+func (r *Replier) CreatedWithLocation(w http.ResponseWriter, location string, data interface{}) error {
+	SetHeaderFunc(func(rw http.ResponseWriter) {
+		rw.Header().Set(HeaderLocation, location)
+	})(r.config)
+
+	return r.Created(w, data)
+}
+
 // Custom -
 func (r *Replier) Custom(w http.ResponseWriter, statusCode int, data interface{}) error {
 	for key, value := range r.config.Header {
@@ -143,6 +152,15 @@ func Success(w http.ResponseWriter, data interface{}) error {
 // Created sets the statusCode of the response to be 201 with the DefaultConfig
 func Created(w http.ResponseWriter, data interface{}) error {
 	return DefaultReplier.Custom(w, http.StatusCreated, data)
+}
+
+// CreatedWithLocation sets statuscode and location header
+func CreatedWithLocation(w http.ResponseWriter, location string, data interface{}) error {
+	SetHeaderFunc(func(rw http.ResponseWriter) {
+		rw.Header().Set(HeaderLocation, location)
+	})(DefaultReplier.config)
+
+	return Created(w, data)
 }
 
 // NotFound sets the statusCode of the response to be 404 with the DefaultConfig

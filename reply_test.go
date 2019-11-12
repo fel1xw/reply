@@ -95,6 +95,21 @@ func TestDefaultMethods(t *testing.T) {
 	}
 }
 
+func TestCreatedWithLocation(t *testing.T) {
+	is := is.New(t)
+	userResourceURL := "/user/1"
+	w := httptest.NewRecorder()
+	replier := reply.NewReplier(reply.XMLMode)
+	replier.CreatedWithLocation(w, userResourceURL, nil)
+	resp := w.Result()
+	is.Equal(resp.Header.Get(reply.HeaderLocation), userResourceURL)
+
+	w = httptest.NewRecorder()
+	reply.CreatedWithLocation(w, userResourceURL, nil)
+	resp = w.Result()
+	is.Equal(resp.Header.Get(reply.HeaderLocation), userResourceURL)
+}
+
 func TestNewReplier(t *testing.T) {
 	is := is.New(t)
 	w := httptest.NewRecorder()
