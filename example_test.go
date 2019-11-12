@@ -9,6 +9,4 @@ import (
 func ExampleOk() {
 	w := httptest.NewRecorder()
 	reply.Ok(w, nil)
-
-	// Output: statusCode set to 200
 }
