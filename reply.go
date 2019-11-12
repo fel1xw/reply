@@ -63,7 +63,7 @@ func NewReplier(config ...Configure) *Replier {
 	}
 }
 
-// SetHeader -
+// SetHeader sets a custom header to the Replier configuration
 func SetHeader(key, value string) func(config *ReplierConfig) {
 	return func(config *ReplierConfig) {
 		config.Header.Set(key, value)
@@ -80,9 +80,24 @@ func XMLMode(config *ReplierConfig) {
 	config.Header.Set(HeaderContentType, MIMEApplicationXML)
 }
 
-// Ok -
+// Ok sets the statusCode of the response to be 200
 func (r *Replier) Ok(w http.ResponseWriter, data interface{}) error {
 	return r.Custom(w, http.StatusOK, data)
+}
+
+// Success sets the statusCode of the response to be 200
+func (r *Replier) Success(w http.ResponseWriter, data interface{}) error {
+	return r.Custom(w, http.StatusOK, data)
+}
+
+// NotFound sets the statusCode of the response to be 404
+func (r *Replier) NotFound(w http.ResponseWriter, data interface{}) error {
+	return r.NotFound(w, data)
+}
+
+// Created sets the statusCode of the response to be 201
+func (r *Replier) Created(w http.ResponseWriter, data interface{}) error {
+	return r.Created(w, data)
 }
 
 // Custom -
@@ -96,27 +111,27 @@ func (r *Replier) Custom(w http.ResponseWriter, statusCode int, data interface{}
 	return json.NewEncoder(w).Encode(data)
 }
 
-// Custom - Sets content-type to be application/json and encodes data + sets status code
+// Custom sets the statusCode of the response to the passed one with the DefaultConfig
 func Custom(w http.ResponseWriter, statusCode int, data interface{}) error {
 	return DefaultReplier.Custom(w, statusCode, data)
 }
 
-// Ok -
+// Ok sets the statusCode of the response to be 200 with the DefaultConfig
 func Ok(w http.ResponseWriter, data interface{}) error {
 	return DefaultReplier.Custom(w, http.StatusOK, data)
 }
 
-// Success -
+// Success sets the statusCode of the response to be 200 with the DefaultConfig
 func Success(w http.ResponseWriter, data interface{}) error {
 	return DefaultReplier.Ok(w, data)
 }
 
-// Created -
+// Created sets the statusCode of the response to be 201 with the DefaultConfig
 func Created(w http.ResponseWriter, data interface{}) error {
 	return DefaultReplier.Custom(w, http.StatusCreated, data)
 }
 
-// NotFound -
+// NotFound sets the statusCode of the response to be 404 with the DefaultConfig
 func NotFound(w http.ResponseWriter, data interface{}) error {
 	return DefaultReplier.Custom(w, http.StatusNotFound, data)
 }
