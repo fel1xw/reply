@@ -41,10 +41,6 @@ func TestReply(t *testing.T) {
 			code: 201,
 		},
 		{
-			fn:   reply.Created,
-			code: 201,
-		},
-		{
 			fn:   reply.NotFound,
 			code: 404,
 		},
@@ -64,12 +60,47 @@ func TestCustomReplier(t *testing.T) {
 	is.Equal(w.Code, http.StatusInternalServerError)
 }
 
+func TestDefaultMethods(t *testing.T) {
+	is := is.New(t)
+	replier := reply.NewReplier(reply.JSONMode)
+
+	for _, c := range []struct {
+		fn   func(w http.ResponseWriter, data interface{}) error
+		code int
+		data interface{}
+	}{
+		{
+			fn:   replier.Ok,
+			code: 200,
+		},
+		{
+			fn:   replier.Success,
+			code: 200,
+		},
+		{
+			fn:   replier.Created,
+			code: 201,
+		},
+		{
+			fn:   replier.NotFound,
+			code: 404,
+		},
+	} {
+		w := httptest.NewRecorder()
+		c.fn(w, c.data)
+		resp := w.Result()
+		is.Equal(resp.StatusCode, c.code)
+		is.Equal(resp.Header.Get(reply.HeaderContentType), reply.MIMEApplicationJSON)
+	}
+}
+
 func TestNewReplier(t *testing.T) {
 	is := is.New(t)
 	w := httptest.NewRecorder()
 	replier := reply.NewReplier(reply.XMLMode)
 	replier.Ok(w, nil)
-	is.Equal(w.Header().Get(reply.HeaderContentType), reply.MIMEApplicationXML)
+	resp := w.Result()
+	is.Equal(resp.Header.Get(reply.HeaderContentType), reply.MIMEApplicationXML)
 }
 
 func TestSetHeader(t *testing.T) {
@@ -77,5 +108,6 @@ func TestSetHeader(t *testing.T) {
 	w := httptest.NewRecorder()
 	replier := reply.NewReplier(reply.SetHeader(reply.HeaderLocation, "/test"))
 	replier.Ok(w, nil)
-	is.Equal(w.Header().Get(reply.HeaderLocation), "/test")
+	resp := w.Result()
+	is.Equal(resp.Header.Get(reply.HeaderLocation), "/test")
 }

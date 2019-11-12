@@ -92,12 +92,12 @@ func (r *Replier) Success(w http.ResponseWriter, data interface{}) error {
 
 // NotFound sets the statusCode of the response to be 404
 func (r *Replier) NotFound(w http.ResponseWriter, data interface{}) error {
-	return r.NotFound(w, data)
+	return r.Custom(w, http.StatusNotFound, data)
 }
 
 // Created sets the statusCode of the response to be 201
 func (r *Replier) Created(w http.ResponseWriter, data interface{}) error {
-	return r.Created(w, data)
+	return r.Custom(w, http.StatusCreated, data)
 }
 
 // Custom -

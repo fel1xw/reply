@@ -21,3 +21,6 @@ jobs:
 
     - name: Test
       run: go test
+
+    - name: Coverage
+      run: go test -cover
