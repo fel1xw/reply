@@ -18,6 +18,6 @@ type User struct {
 
 func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
   u := &User{ID: "123", Name: "Felix"}
-	reply.Created(w, u)
+  reply.Created(w, u)
 }
 ```
